@@ -1,14 +1,15 @@
-import { Box, Button, FormHelperText, Grid2, InputLabel, MenuItem, Select, TextField } from "@mui/material";
+import { Box, Button, FormHelperText, Grid2, MenuItem, Select, TextField, Typography } from "@mui/material";
 import { LayoutContenedor } from "../layout/LayoutContenedor";
 import { useState } from "react";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { Controller, useForm } from "react-hook-form";
 import { validaciones } from "./validaciones";
+import dayjs from "dayjs";
 
 export const Formulario = () => {
-    const [marca, setMarca] = useState('');
-    const [fecha, setFecha] = useState(null);
+
+    const [fecha, setFecha] = useState();
 
     const {
         handleSubmit,
@@ -27,6 +28,7 @@ export const Formulario = () => {
             modelo: "",
             observacion: "",
         },
+        mode: 'onBlur'
     });
     const handleMarca = (event) => {
         const marcaSeleccionada = event.target.value;
@@ -34,6 +36,18 @@ export const Formulario = () => {
 
         setMarca(event.target.value)
     }
+
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [error, setError] = useState('');
+
+    const handleDateChange = (date) => {
+        if (date && date.isBefore(dayjs(), 'day')) {
+            setError('La fecha no puede ser anterior a la fecha actual.');
+        } else {
+            setError('');
+            setSelectedDate(date);
+        }
+    };
 
     const onSubmit = (data) => {
         const idUnico = Date.now();
@@ -49,6 +63,7 @@ export const Formulario = () => {
         localStorage.setItem("repairRequests", JSON.stringify(repairRequests));
         reset();
     };
+
 
     return (
         <LayoutContenedor>
@@ -84,23 +99,18 @@ export const Formulario = () => {
                                     helperText={errors.celular?.message}
                                 />
                             </Box>
+
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
-                                    {...register('fecha')}
-                                    label='Fecha de entrega estimada'
-                                    onChange={(newValue) => {
-                                        setFecha(newValue);
-                                    }}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            fullWidth
-                                            error={!!errors.fecha}
-                                            helperText={errors.fecha?.message}
-                                        />
-                                    )}
+                                    label="Selecciona una fecha"
+                                    value={selectedDate}
+                                    onChange={handleDateChange}
+                                    minDate={dayjs()}
+                                    renderInput={(params) => <TextField {...params} error={!!error} helperText={error} />}
                                 />
+                                {error && <Typography variant="caption" color="error">{error}</Typography>}
                             </LocalizationProvider>
+
                             <TextField
                                 label='Monto Total'
                                 type="number"
